@@ -1,0 +1,19 @@
+{
+  "name": "academic-daily-briefing",
+  "version": "1.0.0",
+  "description": "Automated academic assistant for UTD24 journals",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "node test.js"
+  },
+  "keywords": ["academic", "research", "automation", "UTD24"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "nodemailer": "^6.9.0",
+    "dotenv": "^16.3.0"
+  }
+}
