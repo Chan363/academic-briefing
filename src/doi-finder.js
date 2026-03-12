@@ -11,19 +11,27 @@ class DOIFinder {
   }
 
   /**
-   * 获取前一天的日期范围
+   * 获取前一天的日期范围（北京时间）
+   * GitHub Actions使用UTC时间，需要调整时区
    */
   getYesterdayDateRange() {
-    const yesterday = new Date();
-    yesterday.setDate(yesterday.getDate() - 1);
+    // 获取当前时间（UTC）
+    const now = new Date();
+
+    // 转换为北京时间（UTC+8）
+    const beijingTime = new Date(now.getTime() + (8 * 60 * 60 * 1000));
+
+    // 昨天的北京时间
+    const yesterday = new Date(beijingTime.getTime() - (24 * 60 * 60 * 1000));
     yesterday.setHours(0, 0, 0, 0);
 
-    const endOfYesterday = new Date(yesterday);
-    endOfYesterday.setHours(23, 59, 59, 999);
+    // 将北京时间转回UTC用于API查询
+    const yesterdayUTC = new Date(yesterday.getTime() - (8 * 60 * 60 * 1000));
+    const endOfYesterdayUTC = new Date(yesterdayUTC.getTime() + (23 * 60 * 60 * 1000));
 
     return {
-      start: yesterday.toISOString().split('T')[0],
-      end: endOfYesterday.toISOString().split('T')[0]
+      start: yesterdayUTC.toISOString().split('T')[0],
+      end: endOfYesterdayUTC.toISOString().split('T')[0]
     };
   }
 
@@ -52,11 +60,22 @@ class DOIFinder {
       if (response.data.status === 'ok') {
         const items = response.data.message.items || [];
 
-        // 过滤出确切匹配该期刊的文章
+        // 放宽匹配条件：包含期刊名称即可，不再要求完全匹配
+        // 同时考虑ISSN匹配
         const matchedArticles = items.filter(item => {
-          if (!item['container-title']) return false;
-          const containerName = item['container-title'][0] || '';
-          return containerName.toLowerCase() === journal.name.toLowerCase();
+          // 方法1: ISSN匹配（最准确）
+          if (item.ISSN && journal.ISSN) {
+            return item.ISSN.some(issn => issn === journal.ISSN);
+          }
+
+          // 方法2: 期刊名称包含匹配（更宽松）
+          if (item['container-title']) {
+            const containerName = item['container-title'][0] || '';
+            return containerName.toLowerCase().includes(journal.name.toLowerCase()) ||
+                   journal.name.toLowerCase().includes(containerName.toLowerCase());
+          }
+
+          return false;
         });
 
         return {
