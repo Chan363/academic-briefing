@@ -63,21 +63,26 @@ class EmpiricalDetector {
    */
   checkAbstract(abstract) {
     if (!abstract) {
-      return { isEmpirical: false, confidence: 0 };
+      // 摘要为空时，不直接判定为非实证，而是返回中等置信度
+      return { isEmpirical: false, confidence: 0.5, hasData: false, hasMethod: false, hasResult: false };
     }
 
     const abstractLower = abstract.toLowerCase();
 
-    // 检查数据和方法相关词汇
+    // 扩展数据和方法相关词汇
     const dataIndicators = ['data', 'dataset', 'sample', 'survey', 'interview',
-                           'experiment', 'observation', '数据库', '样本', '调查'];
+                           'experiment', 'observation', 'database', 'empirical', 'test',
+                           'measurement', 'respondent', 'participant', 'case study',
+                           '数据库', '样本', '调查', '实验', '测量', '案例'];
 
-    const methodIndicators = ['regression', 'analysis', 'test', 'estimate',
-                             'correlation', 'factor', 'cluster', '回归',
-                             '分析', '检验', '估计'];
+    const methodIndicators = ['regression', 'analysis', 'analyzed', 'analysis', 'test',
+                             'correlation', 'factor', 'cluster', 'estimate',
+                             'statistical', 'quantitative', 'qualitative',
+                             '回归', '分析', '检验', '估计', '统计', '定量', '定性'];
 
     const resultIndicators = ['result', 'finding', 'evidence', 'significance',
-                            'effect', 'relationship', '结果', '发现', '证据'];
+                            'effect', 'relationship', 'outcome', 'conclusion',
+                            '结果', '发现', '证据', '关系', '结论'];
 
     const hasData = dataIndicators.some(word => abstractLower.includes(word));
     const hasMethod = methodIndicators.some(word => abstractLower.includes(word));
@@ -87,8 +92,9 @@ class EmpiricalDetector {
     const indicators = [hasData, hasMethod, hasResult].filter(Boolean).length;
     const confidence = indicators / 3;
 
+    // 放宽条件：只要有1个指标就可能是实证，2-3个指标则更确定
     return {
-      isEmpirical: indicators >= 2 || (indicators === 1 && hasData),
+      isEmpirical: indicators >= 1,
       hasData,
       hasMethod,
       hasResult,
@@ -165,8 +171,8 @@ class EmpiricalDetector {
       reasons.push('学科领域符合管理学');
     }
 
-    // 阈值判断
-    const threshold = 0.4;
+    // 阈值判断（降低阈值，减少漏判）
+    const threshold = 0.3; // 从0.4降低到0.3
 
     return {
       isEmpirical: score >= threshold,
