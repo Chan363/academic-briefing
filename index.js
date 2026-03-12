@@ -30,6 +30,11 @@ async function main() {
   try {
     // 步骤1: 搜索前一天发表的文章
     console.log('\n📖 步骤 1/5: 搜索UTD24期刊新发表文章...');
+
+    // 显示时间范围
+    const dateRange = doiFinder.getYesterdayDateRange();
+    console.log(`  📅 查询日期范围: ${dateRange.start} 至 ${dateRange.end}`);
+
     const searchResults = await doiFinder.searchAllJournals();
 
     // 收集所有文章
@@ -86,11 +91,24 @@ async function main() {
 
     // 步骤4: 识别实证研究文献
     console.log('\n📖 步骤 4/5: 识别实证研究文献...');
-    const empiricalArticles = empiricalDetector.detectBatch(detailedArticles);
-    console.log(`  ✅ 识别出 ${empiricalArticles.length} 篇实证研究文献`);
 
+    // 详细显示每篇文章的识别结果（用于调试）
+    console.log('\n  📊 文章识别详情:');
+    detailedArticles.forEach(article => {
+      const detection = empiricalDetector.isEmpiricalArticle(article);
+      const status = detection.isEmpirical ? '✅ 实证' : '❌ 非实证';
+      const scoreText = `(得分: ${detection.score.toFixed(2)})`;
+      console.log(`    ${status} ${scoreText} - ${article.title.substring(0, 50)}...`);
+    });
+
+    const empiricalArticles = empiricalDetector.detectBatch(detailedArticles);
+    console.log(`\n  ✅ 识别出 ${empiricalArticles.length} 篇实证研究文献`);
+
+    // 即使没有实证研究，也发送详细的诊断信息
     if (empiricalArticles.length === 0) {
-      console.log('  ⚠️  未找到实证研究文献，发送空报告');
+      console.log('  ⚠️  未找到实证研究文献，发送详细诊断报告');
+      console.log(`  ⚠️  总文章数: ${detailedArticles.length}，识别为实证: ${empiricalArticles.length}`);
+
       const htmlContent = reportGenerator.generate(null);
       await emailSender.sendBriefing(htmlContent, 0);
       return;
