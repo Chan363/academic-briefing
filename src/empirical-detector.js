@@ -8,7 +8,7 @@ class EmpiricalDetector {
     this.empiricalKeywords = [
       'empirical', 'analysis', 'data', 'experiment', 'survey',
       'case study', 'quantitative', 'qualitative', 'statistical',
-      'regression', 'test', 'hypothesis', 'measurement',
+      'regression', 'test', 'hypothesis', 'measurement','evidence',
       'empirically', 'empiric', '实证', '数据分析', '实验',
       '调查', '统计', '假设检验', '案例研究'
     ];
